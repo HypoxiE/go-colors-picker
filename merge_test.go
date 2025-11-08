@@ -1,20 +1,18 @@
-package main
+package gocolorspicker
 
 import (
 	"fmt"
 	"image"
 	"image/draw"
-	_ "image/jpeg" // Import for JPEG support
-	_ "image/png"  // Import for PNG support
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
+	"testing"
+
+	"github.com/lucasb-eyer/go-colorful"
 )
 
-const NEED_COLORS = 10
-const START_BACKLASH = 10
-const END_BACKLASH = 50
-const STEP_BACKLASH = 2
-
-func main() {
+func TestMerge(t *testing.T) {
 	f, err := os.Open("n_girl_overdose.jpg")
 	if err != nil {
 		fmt.Printf("Error opening image: %v\n", err)
@@ -33,7 +31,7 @@ func main() {
 	draw.Draw(rgba, bounds, img, bounds.Min, draw.Src)
 
 	pixelData := rgba.Pix
-	var all_pixels = make(map[[3]uint8]int)
+	var all_pixels = make(map[colorful.Color]int)
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -41,7 +39,7 @@ func main() {
 			r := pixelData[offset]
 			g := pixelData[offset+1]
 			b := pixelData[offset+2]
-			rgb := [3]uint8{r, g, b}
+			rgb := colorful.Color{R: float64(r) / 255, G: float64(g) / 255, B: float64(b) / 255}
 
 			all_pixels[rgb] += 1
 		}
@@ -49,22 +47,9 @@ func main() {
 
 	fmt.Printf("%v\n", len(all_pixels))
 
-	//i := START_BACKLASH
-	//for {
-	//	new_pixels := Merge(all_pixels, i)
-	//	if len(all_pixels) == len(new_pixels) {
-	//		i += STEP_BACKLASH
-	//		continue
-	//	}
+	all_pixels = Merge(all_pixels, 0.1, 10)
 
-	//	if i == END_BACKLASH || len(new_pixels) < NEED_COLORS {
-	//		break
-	//	}
-
-	//	all_pixels = new_pixels
-	//}
-
-	all_pixels = Merge(all_pixels, 4)
-
-	fmt.Printf("%v\n", len(all_pixels))
+	for pix, matches := range all_pixels {
+		fmt.Printf("%v : %v\n", pix.Hex(), matches)
+	}
 }
