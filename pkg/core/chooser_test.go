@@ -45,7 +45,8 @@ func TestGetConfig(t *testing.T) {
 		{R: 0.967925855021158, G: 0.9759492375396482, B: 0.9723625133197197}:     162850,
 	}
 
-	data, err := json.Marshal(GetConfig(a))
+	data, err := json.MarshalIndent(GetConfig(a), "", "  ")
+
 	if err != nil {
 		panic(err)
 	}

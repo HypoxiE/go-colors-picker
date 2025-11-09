@@ -10,8 +10,8 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-func GetPixels(name string) (map[colorful.Color]int, error) {
-	f, err := os.Open(name)
+func GetPixels(path string) (map[colorful.Color]int, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return map[colorful.Color]int{}, err
 	}
