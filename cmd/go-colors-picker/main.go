@@ -27,12 +27,26 @@ func main() {
 			config = core.GetConfig(merged)
 		} else {
 			all_merged := map[colorful.Color]int{}
+			ch := make(chan map[colorful.Color]int)
+			done := make(chan struct{})
 
 			for _, frame := range px {
-				for color, matches := range core.Merge(frame, 0.1, 100) {
-					all_merged[color] += matches
-				}
+				go func(frame map[colorful.Color]int) {
+					ch <- core.Merge(frame, 0.1, 100)
+				}(frame)
 			}
+
+			go func() {
+				for range len(px) {
+					merged := <-ch
+					for color, matches := range merged {
+						all_merged[color] += matches
+					}
+				}
+				close(done)
+			}()
+			<-done
+
 			all_merged = core.Merge(all_merged, 0.1, 10)
 			config = core.GetConfig(all_merged)
 		}
