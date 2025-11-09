@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	core "github.com/HypoxiE/go-colors-picker/pkg/core"
 	"github.com/lucasb-eyer/go-colorful"
@@ -10,22 +11,24 @@ import (
 
 func main() {
 
+	var wg sync.WaitGroup
+
 	if len(os.Args) == 1 {
 		fmt.Println("\033[31mError: enter the file name\033[0m")
 		return
 	}
 
 	for _, name := range os.Args[1:] {
-		px, err := core.GetPixels(name)
-		if err != nil {
-			fmt.Printf("\033[33mWarning: %v has been skipped (%v)\033[0m\n", name, err.Error())
-			continue
-		}
-		var config core.Configuration
-		if len(px) == 1 {
-			merged := core.Merge(px[0], 0.1, 10)
-			config = core.GetConfig(merged)
-		} else {
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+
+			px, err := core.GetPixels(name)
+			if err != nil {
+				fmt.Printf("\033[33mWarning: %v has been skipped (%v)\033[0m\n", name, err.Error())
+				return
+			}
+			var config core.Configuration
 			all_merged := map[colorful.Color]int{}
 			ch := make(chan map[colorful.Color]int)
 			done := make(chan struct{})
@@ -49,10 +52,10 @@ func main() {
 
 			all_merged = core.Merge(all_merged, 0.1, 10)
 			config = core.GetConfig(all_merged)
-		}
 
-		core.SaveConfig(name, config)
-		fmt.Printf("\033[1;34mINFO: image %v has been successfully processed\033[0m\n", name)
+			core.SaveConfig(name, config)
+			fmt.Printf("\033[1;34mINFO: image %v has been successfully processed\033[0m\n", name)
+		}(name)
 	}
-
+	wg.Wait()
 }
