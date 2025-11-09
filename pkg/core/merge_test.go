@@ -10,9 +10,9 @@ func TestMerge(t *testing.T) {
 
 	fmt.Printf("%v\n", len(all_pixels))
 
-	all_pixels = Merge(all_pixels, 0.1, 10)
+	pixels := Merge(all_pixels[0], 0.1, 10)
 
-	for pix, matches := range all_pixels {
+	for pix, matches := range pixels {
 		fmt.Printf("%v : %v\n", pix.Hex(), matches)
 	}
 }

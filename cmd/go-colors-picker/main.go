@@ -5,6 +5,7 @@ import (
 	"os"
 
 	core "github.com/HypoxiE/go-colors-picker/pkg/core"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 func main() {
@@ -20,8 +21,21 @@ func main() {
 			fmt.Printf("\033[33mWarning: %v has been skipped (%v)\033[0m\n", name, err.Error())
 			continue
 		}
-		px = core.Merge(px, 0.1, 10)
-		config := core.GetConfig(px)
+		var config core.Configuration
+		if len(px) == 1 {
+			merged := core.Merge(px[0], 0.1, 10)
+			config = core.GetConfig(merged)
+		} else {
+			all_merged := map[colorful.Color]int{}
+
+			for _, frame := range px {
+				for color, matches := range core.Merge(frame, 0.1, 100) {
+					all_merged[color] += matches
+				}
+			}
+			all_merged = core.Merge(all_merged, 0.1, 10)
+			config = core.GetConfig(all_merged)
+		}
 
 		core.SaveConfig(name, config)
 		fmt.Printf("\033[1;34mINFO: image %v has been successfully processed\033[0m\n", name)
