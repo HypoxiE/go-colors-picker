@@ -8,6 +8,7 @@ import (
 	_ "image/png"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -19,11 +20,18 @@ func GetPixels(path string) ([]map[colorful.Color]int, error) {
 		if err != nil {
 			return []map[colorful.Color]int{}, err
 		}
+		var wg sync.WaitGroup
+		var result = make([]map[colorful.Color]int, len(rgba))
 
-		var result []map[colorful.Color]int
 		for i := range rgba {
-			result = append(result, GetPixelsFromShot(rgba[i], bounds[i]))
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				result[i] = GetPixelsFromShot(rgba[i], bounds[i])
+			}(i)
 		}
+
+		wg.Wait()
 		return result, nil
 	} else {
 		rgba, bounds, err := DecodeStatic(path)
@@ -46,17 +54,27 @@ func DecodeDynamic(path string) ([]*image.RGBA, []image.Rectangle, error) {
 	if err != nil {
 		return []*image.RGBA{}, []image.Rectangle{}, err
 	}
+	var (
+		images = make([]*image.RGBA, len(gifImg.Image))
+		bounds = make([]image.Rectangle, len(gifImg.Image))
+		wg     sync.WaitGroup
+	)
 
-	var images []*image.RGBA
-	var bounds []image.Rectangle
-	for _, frame := range gifImg.Image {
-		bound := frame.Bounds()
-		rgba := image.NewRGBA(bound)
-		draw.Draw(rgba, bound, frame, bound.Min, draw.Src)
+	for i, frame := range gifImg.Image {
+		wg.Add(1)
+		go func(i int, frame *image.Paletted) {
+			defer wg.Done()
 
-		bounds = append(bounds, bound)
-		images = append(images, rgba)
+			bound := frame.Bounds()
+			rgba := image.NewRGBA(bound)
+			draw.Draw(rgba, bound, frame, bound.Min, draw.Src)
+
+			bounds[i] = bound
+			images[i] = rgba
+		}(i, frame)
 	}
+
+	wg.Wait()
 
 	return images, bounds, nil
 }

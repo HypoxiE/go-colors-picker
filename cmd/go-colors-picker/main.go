@@ -29,10 +29,6 @@ func main() {
 				return
 			}
 
-			for _, i := range px {
-				fmt.Println(i)
-			}
-
 			var config core.Configuration
 			all_merged := map[colorful.Color]int{}
 			ch := make(chan map[colorful.Color]int)
