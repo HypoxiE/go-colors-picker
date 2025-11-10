@@ -90,9 +90,11 @@ func GetPixelsFromShot(rgba *image.RGBA, bounds image.Rectangle) map[colorful.Co
 			r := pixelData[offset]
 			g := pixelData[offset+1]
 			b := pixelData[offset+2]
-			rgb := colorful.Color{R: float64(r) / 255, G: float64(g) / 255, B: float64(b) / 255}
 
-			all_pixels[rgb] += 1
+			if pixelData[offset+3] != 0 {
+				rgb := colorful.Color{R: float64(r) / 255, G: float64(g) / 255, B: float64(b) / 255}
+				all_pixels[rgb] += 1
+			}
 		}
 	}
 

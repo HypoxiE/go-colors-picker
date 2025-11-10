@@ -28,6 +28,11 @@ func main() {
 				fmt.Printf("\033[33mWarning: %v has been skipped (%v)\033[0m\n", name, err.Error())
 				return
 			}
+
+			for _, i := range px {
+				fmt.Println(i)
+			}
+
 			var config core.Configuration
 			all_merged := map[colorful.Color]int{}
 			ch := make(chan map[colorful.Color]int)
