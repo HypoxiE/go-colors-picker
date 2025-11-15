@@ -10,13 +10,25 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gen2brain/webp"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
 func GetPixels(path string) ([]map[colorful.Color]int, error) {
 
-	if strings.HasSuffix(path, ".gif") {
-		rgba, bounds, err := DecodeDynamic(path)
+	if strings.HasSuffix(path, ".gif") || strings.HasSuffix(path, ".webp") {
+		var (
+			rgba   []*image.RGBA
+			bounds []image.Rectangle
+			err    error
+		)
+
+		if strings.HasSuffix(path, ".gif") {
+			rgba, bounds, err = DecodeGif(path)
+		} else if strings.HasSuffix(path, ".webp") {
+			rgba, bounds, err = DecodeWebp(path)
+		}
+
 		if err != nil {
 			return []map[colorful.Color]int{}, err
 		}
@@ -43,7 +55,43 @@ func GetPixels(path string) ([]map[colorful.Color]int, error) {
 	}
 }
 
-func DecodeDynamic(path string) ([]*image.RGBA, []image.Rectangle, error) {
+func DecodeWebp(path string) ([]*image.RGBA, []image.Rectangle, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return []*image.RGBA{}, []image.Rectangle{}, err
+	}
+	defer f.Close()
+
+	webpImgs, err := webp.DecodeAll(f)
+	if err != nil {
+		return []*image.RGBA{}, []image.Rectangle{}, err
+	}
+
+	var (
+		images = make([]*image.RGBA, len(webpImgs.Image))
+		bounds = make([]image.Rectangle, len(webpImgs.Image))
+		wg     sync.WaitGroup
+	)
+
+	for i, frame := range webpImgs.Image {
+		wg.Add(1)
+		go func(i int, frame image.Image) {
+			defer wg.Done()
+
+			bound := frame.Bounds()
+			rgba := image.NewRGBA(bound)
+			draw.Draw(rgba, bound, frame, bound.Min, draw.Src)
+
+			bounds[i] = bound
+			images[i] = rgba
+		}(i, frame)
+	}
+
+	wg.Wait()
+	return images, bounds, nil
+}
+
+func DecodeGif(path string) ([]*image.RGBA, []image.Rectangle, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return []*image.RGBA{}, []image.Rectangle{}, err
