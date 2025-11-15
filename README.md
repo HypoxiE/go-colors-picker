@@ -49,8 +49,10 @@ This tool keeps your setup visually consistent without hurting your eyes.
 
 ## License
 
-This project is licensed under **CC BY-NC 4.0** (non-commercial use).  
-See the LICENSE file for details.
+This project, including all historical commits, is licensed under the terms of the **Creative Commons BY-NC 4.0** license.
+By using this repository, you agree that all past and future versions of the code are distributed under this license.
+
+See the LICENSE.md file for details.
 
 ---
 
